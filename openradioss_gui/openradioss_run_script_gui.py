@@ -19,7 +19,6 @@
 import os
 import platform
 import tkinter as tk
-import webbrowser
 if platform.system() == 'Windows':
     import ctypes
     myappid = 'openradioss.jobgui.1.6.0'
@@ -40,57 +39,22 @@ try:
 except ImportError:
     # If VortexRadioss Module not present disable d3plot options
     vd3penabled = False
+import gui_def
 
+# Global Variables
 job_holder = JobHolder()
-root = tk.Tk()
-root.title('OpenRadioss')
-if vd3penabled:
-    if platform.system() == 'Windows':
-        root.geometry('790x105')
-        root.minsize(790, 105)
-    elif platform.system() == 'Linux':
-        root.geometry('910x105')
-        root.minsize(910, 105)
-    root.resizable(True, True)
-    
-else:
-    if platform.system() == 'Windows':
-        root.geometry('700x105')
-        root.minsize(700, 105)
-    elif platform.system() == 'Linux':
-        root.geometry('800x105')
-        root.minsize(800, 105)
-    root.resizable(True, True)
+Window     = gui_def.window(vd3penabled)
 
-if platform.system() == 'Windows':    
-    root.iconbitmap('./icon/ross.ico')
-    icon_folder = tk.PhotoImage(file='./icon/or_folder.png')
-    
-elif platform.system() == 'Linux':
-    icon_image = tk.PhotoImage(file='./icon/ross.png')
-    root.iconphoto(True, icon_image)
-    icon_folder = tk.PhotoImage(file='./icon/or_folder.png')
 
+#----------------- Functions -----------------#
 def close_window():
     if job_holder.is_empty() or messagebox.askokcancel('Close Window', 'Job is running. Close?'):
-        root.destroy()
+        Window.close()
         quit()
 
 def on_closing():
     # Call the same function as the 'Close' button when the window is closed
     close_window()
-
-def about_dialog():
-    messagebox.showinfo("About", "this job submission gui is from OpenRadioss tools" )
-
-def latestv_dialog():
-    webbrowser.open("https://github.com/OpenRadioss/OpenRadioss/releases")
-def latestgui_dialog():
-    webbrowser.open("https://github.com/OpenRadioss/Tools/tree/main/openradioss_gui")
-def latestvrad_dialog():
-    webbrowser.open("https://github.com/Vortex-CAE/Vortex-Radioss")
-def orweb_dialog():
-    webbrowser.open("https://openradioss.org")
     
 def add_job():
     check_install()
@@ -147,7 +111,7 @@ def clear_queue():
 
 def run_job():
     job_holder.run_job()
-    root.after(1000, run_job)
+    Window.root.after(1000, run_job)
     return
 
 def select_file():
@@ -230,94 +194,31 @@ def apply_config():
                 if f.readline() == 'True':
                     d3plot_status.set(True)
 
-frame_file = tk.Frame(root)
-frame_file.pack(fill=tk.X, pady=(10,0))
-job_file_entry = PlaceholderEntry(frame_file, placeholder_text='Job file (.rad, .key, or .k)', entry_width=83)
-job_file_entry.pack(side=tk.LEFT, expand=True, fill='x', padx=(30, 0), ipady=2)
-job_file_button = ButtonWithHighlight(frame_file, image=icon_folder, command=select_file, width=20)
-job_file_button.pack(side=tk.RIGHT, padx=(5, 30))
+# File Menu
+job_file_entry=Window.file('Job file (.rad, .key, or .k)', select_file, Window.icon_folder)
 
-frame_thread = tk.Frame(root)
-frame_thread.pack(side=tk.LEFT, padx=(30, 0))
-
-# Two separate frames to stack checkboxes
-frame_checkboxes = tk.Frame(frame_thread)
-frame_checkboxes.pack(side=tk.TOP)
-
-frame_checkboxes1 = tk.Frame(frame_checkboxes)
-frame_checkboxes1.pack(side=tk.RIGHT, pady=(5,0))
-
-frame_checkboxes2 = tk.Frame(frame_checkboxes1)
-frame_checkboxes2.pack(side=tk.BOTTOM)
-
+# Create checkboxes
+nt_entry          = Window.thread_mpi('-nt', 5,0,2)
+np_entry          = Window.thread_mpi('-np', 5,5,2)
+single_status     = Window.checkbox1('Single Precision ',5,5)
+vtk_status        = Window.checkbox1('Anim - vtk',5,2)
+starter_status    = Window.checkbox2('Run Starter Only',5,2)
 if vd3penabled:
-    frame_checkboxes3 = tk.Frame(frame_checkboxes2)
-    frame_checkboxes3.pack(side=tk.RIGHT)
-
-nt_entry = PlaceholderEntry(frame_checkboxes, placeholder_text='-nt', entry_width=5)
-nt_entry.pack(side=tk.LEFT, ipady=2)
-np_entry = PlaceholderEntry(frame_checkboxes, placeholder_text='-np', entry_width=5)
-np_entry.pack(side=tk.LEFT, padx=5, ipady=2)
-
-single_status = tk.BooleanVar()
-single_checkbox = Checkbutton(frame_checkboxes1, text='Single Precision ', variable=single_status)
-single_checkbox.pack(side=tk.LEFT, padx=5, ipady=5)
-vtk_status = tk.BooleanVar()
-vtk_checkbox = Checkbutton(frame_checkboxes1, text='Anim - vtk', variable=vtk_status)
-vtk_checkbox.pack(side=tk.LEFT, padx=5, ipady=2)
-starter_status = tk.BooleanVar()
-starter_checkbox = Checkbutton(frame_checkboxes2, text='Run Starter Only', variable=starter_status)
-starter_checkbox.pack(side=tk.LEFT, padx=5, ipady=2)
-if vd3penabled:
-    d3plot_status = tk.BooleanVar()
-    d3plot_checkbox = Checkbutton(frame_checkboxes2, text='Anim - d3plot', variable=d3plot_status)
-    d3plot_checkbox.pack(side=tk.LEFT, padx=5, ipady=2)
-csv_status = tk.BooleanVar()
-if vd3penabled:
-    csv_checkbox = Checkbutton(frame_checkboxes3, text='TH - csv', variable=csv_status)
-    csv_checkbox.pack(side=tk.LEFT)
+    d3plot_status = Window.checkbox2('Anim - d3plot',5,2)
+    csv_status    = Window.checkbox3('TH - csv',0,0)
 else:
-    csv_checkbox = Checkbutton(frame_checkboxes2, text='TH - csv    ', variable=csv_status)
-    csv_checkbox.pack(side=tk.LEFT, padx=5, ipady=2)
+    csv_check_box = Window.checkbox2('TH - csv    ',5,2)
 
-frame_control = tk.Frame(root)
-frame_control.pack(side=tk.RIGHT, padx=(0, 30))
-if platform.system() == 'Windows':
-    add_button = ButtonWithHighlight(frame_control, text='Add Job', command=add_job, width=7)
-elif platform.system() == 'Linux':
-    add_button = ButtonWithHighlight(frame_control, text='Add Job', command=add_job, width=8)
-add_button.pack(side=tk.LEFT, padx=(0, 5))
-if platform.system() == 'Windows':
-    show_queue_button = ButtonWithHighlight(frame_control, text='Show Queue', command=show_queue, width=7)
-elif platform.system() == 'Linux':
-    show_queue_button = ButtonWithHighlight(frame_control, text='Show Queue', command=show_queue, width=8)    
-show_queue_button.pack(side=tk.LEFT, padx=5)
-if platform.system() == 'Windows':
-    clear_queue_button = ButtonWithHighlight(frame_control, text='Clear Queue', command=clear_queue, width=7)
-elif platform.system() == 'Linux':
-    clear_queue_button = ButtonWithHighlight(frame_control, text='Clear Queue', command=clear_queue, width=8)
-clear_queue_button.pack(side=tk.LEFT, padx=5)
-if platform.system() == 'Windows':
-    close_button = ButtonWithHighlight(frame_control, text='Close', command=close_window, width=7)
-elif platform.system() == 'Linux':
-    close_button = ButtonWithHighlight(frame_control, text='Close', command=close_window, width=8)
-close_button.pack(side=tk.LEFT, padx=(5, 0))
+# Create buttons
+Window.button('Add Job', add_job, (0, 5))
+Window.button('Show Queue', show_queue, 5)
+Window.button('Clear Queue', clear_queue, 5)
+Window.button('Close', close_window, (5, 0))
 
 # Create a menu bar
-menubar = tk.Menu(root)
-root.config(menu=menubar)
-
-# Create an About menu
-about_menu = tk.Menu(menubar, tearoff=False)
-menubar.add_cascade(label="Info", menu=about_menu)
-about_menu.add_command(label="Get the latest version of OpenRadioss (github link)", command=latestv_dialog)
-about_menu.add_command(label="Documentation and Latest Version of this gui (github_link)", command=latestgui_dialog)
-about_menu.add_command(label="Get the latest version of the VortexRadioss d3plot python module (github link)", command=latestvrad_dialog)
-about_menu.add_command(label="Visit the OpenRadioss web page", command=orweb_dialog)
-about_menu.add_command(label="About this gui", command=about_dialog)
+Window.menubar('Info')
 
 apply_config()
-
-root.protocol("WM_DELETE_WINDOW", on_closing)
-root.after(1000, run_job)
-root.mainloop()
+Window.root.protocol("WM_DELETE_WINDOW", on_closing)
+Window.root.after(1000, run_job)
+Window.root.mainloop()
