@@ -1,6 +1,6 @@
 echo OFF
 
-REM Copyright>  Copyright 1986-2026 Altair Engineering Inc.  
+REM Copyright>  Copyright (C) 2026 SISW Siemens Industry Software Inc.
 REM Copyright> 
 REM Copyright>  Permission is hereby granted, free of charge, to any person obtaining 
 REM Copyright>  a copy of this software and associated documentation files (the "Software"), 
